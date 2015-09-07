@@ -1,0 +1,6 @@
+[submodule "Banner"]
+	path = Banner
+	url = https://github.com/jlettvin/Banner
+[submodule "Raw"]
+	path = Raw
+	url = https://github.com/jlettvin/Raw
