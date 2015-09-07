@@ -8,21 +8,27 @@ License: GPLv3 http://www.gnu.org/licenses/gpl-3.0.en.html
 Use record.py to acquire short sound samples in the style of a tape recorder.
 
 For each phrase, a prompt is given to acquaint the speaker with the phrase.
-After hitting a key, recording begins and continues until hittins another key.
-The sample is recorded in a file.
+After hitting a key, recording begins and continues until another key is hit.
+The sample is recorded in a file.  This process repeats for each phrase.
+Phrases are typically quoted strings.
 
 Usage:
-    record.py <phrase> [<phrase>...]
+    record.py [-b <bits>] [-c <channels>] [-r <rate>] <phrase> [<phrase>...]
     record.py (-h | --help)
     record.py (-u | --unit)
     record.py --version
 
 Options:
-    -u, --unit  Run the unit tests.  [default: False]
+    -b, --bits=<bits>           Number of sample bits.  [default: 16]
+    -c, --channels=<channels>   Mono=1, Stereo=2.       [default: 1]
+    -r, --rate=<rate>           Sampling rate.          [default: 16000]
+    -u, --unit                  Run the unit tests.     [default: False]
 
 A file named "phrase.<phrase>.wav" is generated for each phrase given.
 For instance, if 'record.py "hello world"' is run, a file named
 phrase.hello.world.wav is generated.
+
+Some options are copied from the SoX command-line option list.
 """
 
 from os import (kill)
@@ -42,14 +48,16 @@ def crprint(msg):
     stdout.flush()
 
 
-def prompt(pre, msg, post):
+def prompt(pre='Prompt', msg='Action required', post='continue'):
     "prompt shows a message, listens for a raw key, then clears the message."
     crprint('%s: "%s".  --Press any key to %s.--' % (pre, msg, post))
+    char = ' '
     with Raw() as raw:
         while not raw.kbhit():
             pass
-        raw.getch()
+        char = raw.getch()
     crprint('')
+    return char
 
 
 def keep(source):
@@ -67,13 +75,26 @@ def record(phrase, **kw):
     "record uses prompts and sox to collect a sound sample."
     prefix, ext = [kw.get('prefix', 'phrase'), kw.get('ext', 'wav')]
     filename = '%s.%s.%s' % (prefix, keep(phrase), ext)
-    options = ['-c 2', '-r 16000 -b 16 -c 1']
-    command = 'rec -q %s %s trim 0 2:00' % (options[1], filename)
+    options = '-b %s -c %s -r %s' % (
+            kw.get('--bits', 16),
+            kw.get('--channels', 1),
+            kw.get('--rate', 16000))
+    rec = 'rec -q %s %s trim 0 2:00 +10' % (options, filename)
+    play = 'play -q %s' % (filename)
     try:
-        prompt('Preparing', phrase, 'start')
-        pid = Popen(command.split(), stderr=PIPE).pid
-        prompt('Recording', phrase, 'stop')
-        kill(pid, SIGTERM)
+        while True:
+            prompt('Preparing', phrase, 'start')
+            pid = Popen(rec.split(), stderr=PIPE).pid
+            prompt('Recording', phrase, 'stop')
+            kill(pid, SIGTERM)
+            Popen(play.split(), stderr=PIPE).pid
+            response = None
+            while response == None:
+                char = prompt('Sample collected', 'Keep? [Y/n]').upper()
+                if char in ['Y', 'N']:
+                    response = char
+            if response == 'Y':
+                break
     except:
         print 'Unexpected exception:', exc_info()[0]
 
@@ -92,7 +113,7 @@ if __name__ == "__main__":
             test()
         else:
             for phrase in kw.get('<phrase>', []):
-                record(phrase)
+                record(phrase, **kw)
 
     KWARGS = docopt(__doc__, version=VERSION)
 
