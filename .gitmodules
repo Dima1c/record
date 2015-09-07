@@ -4,3 +4,6 @@
 [submodule "Raw"]
 	path = Raw
 	url = https://github.com/jlettvin/Raw
+[submodule "sox"]
+	path = sox
+	url = https://github.com/uklauer/sox

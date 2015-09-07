@@ -5,10 +5,14 @@ record.py
 Copyright(c) 2015 Jonathan D. Lettvin, All Rights Reserved.
 License: GPLv3 http://www.gnu.org/licenses/gpl-3.0.en.html
 
-record is used to acquire short sound samples in the style of a tape recorder.
+Use record.py to acquire short sound samples in the style of a tape recorder.
+
+For each phrase, a prompt is given to acquaint the speaker with the phrase.
+After hitting a key, recording begins and continues until hittins another key.
+The sample is recorded in a file.
 
 Usage:
-    record.py <sentence> [<sentence>...]
+    record.py <phrase> [<phrase>...]
     record.py (-h | --help)
     record.py (-u | --unit)
     record.py --version
@@ -16,9 +20,9 @@ Usage:
 Options:
     -u, --unit  Run the unit tests.  [default: False]
 
-A file named "sentence.<sentence>.wav" is generated for each sentence given.
+A file named "phrase.<phrase>.wav" is generated for each phrase given.
 For instance, if 'record.py "hello world"' is run, a file named
-sentence.hello.world.wav is generated.
+phrase.hello.world.wav is generated.
 """
 
 from os import (kill)
@@ -51,15 +55,15 @@ def keep(source):
             target += '.'
     return target
 
-def record(sentence, **kw):
-    prefix, ext = [kw.get('prefix', 'sentence'), kw.get('ext', 'wav')]
-    filename = '%s.%s.%s' % (prefix, keep(sentence), ext)
+def record(phrase, **kw):
+    prefix, ext = [kw.get('prefix', 'phrase'), kw.get('ext', 'wav')]
+    filename = '%s.%s.%s' % (prefix, keep(phrase), ext)
     options = ['-c 2', '-r 16000 -b 16 -c 1']
     command = 'rec -q %s %s trim 0 2:00' % (options[1], filename)
     try:
-        prompt('Preparing', sentence, 'start')
+        prompt('Preparing', phrase, 'start')
         pid = Popen(command.split(), stderr=PIPE).pid
-        prompt('Recording', sentence, 'stop')
+        prompt('Recording', phrase, 'stop')
         kill(pid, SIGTERM)
     except:
         pass
@@ -67,17 +71,17 @@ def record(sentence, **kw):
 if __name__ == "__main__":
 
     def test():
-        sentences = ["hello world", "klatu barada nikto", "fubar" ]
+        phrases = ["hello world", "klatu barada nikto", "fubar" ]
         print 'The following recordings are less than 2 minutes of speech.'
-        for sentence in sentences:
-            record(sentence)
+        for phrase in phrases:
+            record(phrase)
 
     def main(**kw):
         if kw.get('--unit', False):
             test()
         else:
-            for sentence in kw.get('<sentence>', []):
-                record(sentence)
+            for phrase in kw.get('<phrase>', []):
+                record(phrase)
 
     kwargs = docopt(__doc__, version=VERSION)
 
