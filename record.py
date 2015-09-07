@@ -14,15 +14,17 @@ Phrases are typically quoted strings.
 
 Usage:
     record.py [-b <bits>] [-c <channels>] [-r <rate>] <phrase> [<phrase>...]
+    record.py [-b <bits>] [-c <channels>] [-r <rate>] [-f <phrasefile>]
     record.py (-h | --help)
     record.py (-u | --unit)
     record.py --version
 
 Options:
-    -b, --bits=<bits>           Number of sample bits.  [default: 16]
-    -c, --channels=<channels>   Mono=1, Stereo=2.       [default: 1]
-    -r, --rate=<rate>           Sampling rate.          [default: 16000]
-    -u, --unit                  Run the unit tests.     [default: False]
+    -b, --bits=<bits>           Number of sample bits.      [default: 16]
+    -c, --channels=<channels>   Mono=1, Stereo=2.           [default: 1]
+    -f, --file=<phrasefile>     File containing phrases.    [default: None]
+    -r, --rate=<rate>           Sampling rate.              [default: 16000]
+    -u, --unit                  Run the unit tests.         [default: False]
 
 A file named "phrase.<phrase>.wav" is generated for each phrase given.
 For instance, if 'record.py "hello world"' is run, a file named
@@ -112,8 +114,18 @@ if __name__ == "__main__":
         if kw.get('--unit', False):
             test()
         else:
-            for phrase in kw.get('<phrase>', []):
-                record(phrase, **kw)
+            phrasefile = kw.get('--file', None)
+            phrases = []
+            if phrasefile:
+                with open(phrasefile) as source:
+                    phrases = [line.strip() for line in source.readlines()]
+            else:
+                phrases = kw.get('<phrase>', [])
+            if not phrases:
+                print 'No phrases to record'
+            else:
+                for phrase in phrases:
+                    record(phrase, **kw)
 
     KWARGS = docopt(__doc__, version=VERSION)
 
