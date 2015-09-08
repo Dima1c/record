@@ -96,7 +96,9 @@ def PTT(phrase, **kw):
                         kill(pid, SIGTERM)
                         pid = 0
                         playing = True
-                        print 'stopped "%s"     \r' % (phrase),
+                        message = '<RETURN> "%s" to keep, %s to resample\r' % (
+                                filename, '<SPACE>')
+                        print message,
                         stdout.flush()
                 elif event.type == pygame.KEYDOWN:
                     if not recording and event.key == pygame.K_SPACE:
@@ -105,8 +107,8 @@ def PTT(phrase, **kw):
                         print 'started "%s"     \r' % (phrase),
                         stdout.flush()
                     elif event.key == pygame.K_RETURN:
+                        print filename, ' ' * 50
                         collecting = False
-                        print 'keeping', filename
                         stdout.flush()
             if playing:
                 Popen(play.split(), stderr=PIPE).pid
